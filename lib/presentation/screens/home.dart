@@ -133,7 +133,7 @@ class _MapScreenState extends State<MapScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Mapa con Mi Ubicación'),
+        title: Text('MoonHike'),
       ),
       body: Stack(
         children: [
