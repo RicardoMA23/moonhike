@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:moonhike/presentation/widgets/address_search_widget.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:moonhike/data/models/route_service.dart'; // Importar el servicio de rutas
+import 'package:moonhike/data/models/route_service.dart';
+import 'package:moonhike/data/repositories/route_repository.dart';
+import 'package:moonhike/domain/use_cases/get_routes_use_case.dart';
+import 'package:moonhike/core/widgets/address_search_widget.dart';
+
+import '../../core/utils/location_utils.dart';  // Importa el AddressSearchWidget
 
 class MapScreen extends StatefulWidget {
   @override
@@ -16,10 +19,16 @@ class _MapScreenState extends State<MapScreen> {
   Set<Marker> _markers = {};
   LatLng? _selectedLocation;
   bool _showStartRouteButton = false;
-  Set<Polyline> _polylines = {}; // Para dibujar las rutas
+  Set<Polyline> _polylines = {};
+  int _selectedRouteIndex = 0;
+  List<List<LatLng>> _routes = [];
 
-  // Instancia del servicio de rutas
-  RouteService routeService = RouteService('AIzaSyDNHOPdlWDOqsFiL9_UQCkg2fnlpyww6A4'); // Coloca tu API Key
+  final RouteRepository routeRepository = RouteRepository(RouteService('AIzaSyDNHOPdlWDOqsFiL9_UQCkg2fnlpyww6A4'));
+  late GetRoutesUseCase getRoutesUseCase;
+
+  _MapScreenState() {
+    getRoutesUseCase = GetRoutesUseCase(routeRepository);
+  }
 
   @override
   void initState() {
@@ -27,119 +36,83 @@ class _MapScreenState extends State<MapScreen> {
     _setInitialLocation();
   }
 
-  Future<Position> _getUserLocation() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      await Geolocator.openLocationSettings();
-      return Future.error('Los servicios de ubicación están desactivados');
-    }
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return Future.error('Permiso de ubicación denegado');
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      return Future.error('Permiso de ubicación denegado permanentemente');
-    }
-
-    return await Geolocator.getCurrentPosition();
-  }
-
   void _setInitialLocation() async {
     try {
-      Position currentPosition = await _getUserLocation();
-      LatLng currentLatLng = LatLng(currentPosition.latitude, currentPosition.longitude);
+      Position position = await LocationUtils.getUserLocation();
+      print("Ubicación actual: ${position.latitude}, ${position.longitude}");
 
       setState(() {
-        _currentPosition = currentLatLng;
+        _currentPosition = LatLng(position.latitude, position.longitude);
         _markers.add(Marker(
           markerId: MarkerId('currentLocation'),
-          position: currentLatLng,
+          position: _currentPosition!,
           infoWindow: InfoWindow(title: 'Mi Ubicación'),
         ));
       });
 
-      _controller?.animateCamera(CameraUpdate.newLatLng(currentLatLng));
+      if (_controller != null) {
+        _controller?.animateCamera(CameraUpdate.newLatLng(_currentPosition!));
+      }
     } catch (e) {
       print('Error obteniendo la ubicación: $e');
+      setState(() {
+        _currentPosition = LatLng(25.6866, -100.3161);  // Monterrey
+        _markers.add(Marker(
+          markerId: MarkerId('defaultLocation'),
+          position: _currentPosition!,
+          infoWindow: InfoWindow(title: 'Ubicación por Defecto: Monterrey'),
+        ));
+      });
+
+      if (_controller != null) {
+        _controller?.animateCamera(CameraUpdate.newLatLng(_currentPosition!));
+      }
     }
-  }
-
-  void _onLocationSelected(LatLng location) {
-    setState(() {
-      _selectedLocation = location;
-      _markers.add(Marker(
-        markerId: MarkerId('selectedLocation'),
-        position: location,
-        infoWindow: InfoWindow(title: 'Destino Seleccionado'),
-      ));
-      _showStartRouteButton = true;
-    });
-
-    _controller?.animateCamera(CameraUpdate.newLatLng(location));
   }
 
   Future<void> _startRoutes() async {
-    if (_currentPosition == null || _selectedLocation == null) {
-      print("No se puede iniciar la ruta sin una ubicación actual o destino");
-      return;
-    }
+    if (_currentPosition == null || _selectedLocation == null) return;
 
-    // Llamamos a la función getRoutes desde el servicio de rutas
-    List<List<LatLng>> routes = await routeService.getRoutes(_currentPosition!, _selectedLocation!);
+    _routes = await getRoutesUseCase.execute(_currentPosition!, _selectedLocation!);
 
-    if (routes.isNotEmpty) {
-      // Limpiamos las polylines existentes
-      setState(() {
-        _polylines.clear();
-      });
-
-      // Dibujamos cada ruta con un color diferente
-      for (int i = 0; i < routes.length; i++) {
-        setState(() {
-          _polylines.add(Polyline(
-            polylineId: PolylineId('route_$i'),
-            points: routes[i],
-            color: i == 0 ? Colors.blue : Colors.grey, // Primera ruta (más rápida) en azul, las demás en gris
-            width: 5,
-          ));
-        });
+    setState(() {
+      _polylines.clear();
+      for (int i = 0; i < _routes.length; i++) {
+        _polylines.add(Polyline(
+          polylineId: PolylineId('route_$i'),
+          points: _routes[i],
+          color: i == _selectedRouteIndex ? Colors.blue : Colors.grey,
+          width: 5,
+        ));
       }
-
-      // Mover la cámara para mostrar toda la ruta
-      LatLngBounds bounds = _getBoundsFromLatLngList(routes.expand((route) => route).toList());
-      _controller?.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
-    }
+    });
   }
 
-  // Función para obtener los límites de la cámara con base en los puntos LatLng
-  LatLngBounds _getBoundsFromLatLngList(List<LatLng> list) {
-    double southWestLat = list.map((e) => e.latitude).reduce((value, element) => value < element ? value : element);
-    double southWestLng = list.map((e) => e.longitude).reduce((value, element) => value < element ? value : element);
-    double northEastLat = list.map((e) => e.latitude).reduce((value, element) => value > element ? value : element);
-    double northEastLng = list.map((e) => e.longitude).reduce((value, element) => value > element ? value : element);
+  void _selectRoute(int index) {
+    setState(() {
+      _selectedRouteIndex = index;
+      _polylines.clear();
 
-    return LatLngBounds(
-      southwest: LatLng(southWestLat, southWestLng),
-      northeast: LatLng(northEastLat, northEastLng),
-    );
+      for (int i = 0; i < _routes.length; i++) {
+        _polylines.add(Polyline(
+          polylineId: PolylineId('route_$i'),
+          points: _routes[i],
+          color: i == _selectedRouteIndex ? Colors.blue : Colors.grey,
+          width: 5,
+        ));
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('MoonHike'),
-      ),
+      appBar: AppBar(title: Text('MoonHike')),
       body: Stack(
         children: [
           GoogleMap(
             initialCameraPosition: CameraPosition(
-              target: _currentPosition ?? LatLng(40.712776, -74.005974),
+              target: _currentPosition ?? LatLng(25.6866, -100.3161), // Monterrey por defecto
               zoom: 14.0,
             ),
             onMapCreated: (GoogleMapController controller) {
@@ -149,7 +122,7 @@ class _MapScreenState extends State<MapScreen> {
               }
             },
             markers: _markers,
-            polylines: _polylines, // Añadimos las polylines para las rutas
+            polylines: _polylines,
             myLocationEnabled: true,
             myLocationButtonEnabled: true,
           ),
@@ -158,8 +131,21 @@ class _MapScreenState extends State<MapScreen> {
             left: 10,
             right: 10,
             child: AddressSearchWidget(
-              onLocationSelected: (location) {
-                _onLocationSelected(location);
+              onLocationSelected: (LatLng location) {
+                setState(() {
+                  _selectedLocation = location;
+                  _markers.add(Marker(
+                    markerId: MarkerId('selectedLocation'),
+                    position: _selectedLocation!,
+                    infoWindow: InfoWindow(title: 'Ubicación seleccionada'),
+                  ));
+
+                  // Centra la cámara en la ubicación seleccionada
+                  _controller?.animateCamera(CameraUpdate.newLatLng(_selectedLocation!));
+
+                  // Activa el botón de "Iniciar Rutas" cuando se selecciona una ubicación
+                  _showStartRouteButton = true;
+                });
               },
             ),
           ),
@@ -173,6 +159,24 @@ class _MapScreenState extends State<MapScreen> {
                 child: Text('Iniciar Rutas'),
               ),
             ),
+          Positioned(
+            bottom: 30,
+            left: 10,
+            right: 10,
+            child: _routes.isNotEmpty
+                ? Column(
+              children: List.generate(_routes.length, (index) {
+                return ElevatedButton(
+                  onPressed: () => _selectRoute(index),
+                  child: Text('Seleccionar Ruta ${index + 1}'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: index == _selectedRouteIndex ? Colors.blue : Colors.grey,
+                  ),
+                );
+              }),
+            )
+                : Container(),
+          ),
         ],
       ),
     );
