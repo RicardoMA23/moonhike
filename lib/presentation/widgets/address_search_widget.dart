@@ -19,7 +19,7 @@ class _AddressSearchWidgetState extends State<AddressSearchWidget> {
   bool _isLoading = false;
 
   void _getSuggestions(String input) async {
-    final String apiKey = 'TU_API_KEY_DE_GOOGLE_PLACES'; // Reemplaza con tu API key de Places
+    final String apiKey = 'AIzaSyDNHOPdlWDOqsFiL9_UQCkg2fnlpyww6A4'; // Reemplaza con tu API key de Places
     final String url =
         'https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$input&key=$apiKey';
 
@@ -31,7 +31,7 @@ class _AddressSearchWidgetState extends State<AddressSearchWidget> {
   }
 
   void _getLatLngFromPlaceId(String placeId) async {
-    final String apiKey = 'TU_API_KEY_DE_GOOGLE_PLACES'; // Reemplaza con tu API key de Places
+    final String apiKey = 'AIzaSyDNHOPdlWDOqsFiL9_UQCkg2fnlpyww6A4'; // Reemplaza con tu API key de Places
     final String url =
         'https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeId&key=$apiKey';
 
