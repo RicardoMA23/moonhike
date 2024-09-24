@@ -5,8 +5,7 @@ import 'package:moonhike/data/models/route_service.dart';
 import 'package:moonhike/data/repositories/route_repository.dart';
 import 'package:moonhike/domain/use_cases/get_routes_use_case.dart';
 import 'package:moonhike/core/widgets/address_search_widget.dart';
-
-import '../../core/utils/location_utils.dart';  // Importa el AddressSearchWidget
+import '../../core/utils/location_utils.dart';
 
 class MapScreen extends StatefulWidget {
   @override
@@ -23,7 +22,7 @@ class _MapScreenState extends State<MapScreen> {
   int _selectedRouteIndex = 0;
   List<List<LatLng>> _routes = [];
 
-  final RouteRepository routeRepository = RouteRepository(RouteService('AIzaSyDNHOPdlWDOqsFiL9_UQCkg2fnlpyww6A4'));
+  final RouteRepository routeRepository = RouteRepository(RouteService('YOUR_API_KEY_HERE'));
   late GetRoutesUseCase getRoutesUseCase;
 
   _MapScreenState() {
@@ -36,6 +35,7 @@ class _MapScreenState extends State<MapScreen> {
     _setInitialLocation();
   }
 
+  // Establece la ubicación inicial
   void _setInitialLocation() async {
     try {
       Position position = await LocationUtils.getUserLocation();
@@ -50,13 +50,11 @@ class _MapScreenState extends State<MapScreen> {
         ));
       });
 
-      if (_controller != null) {
-        _controller?.animateCamera(CameraUpdate.newLatLng(_currentPosition!));
-      }
+      _controller?.animateCamera(CameraUpdate.newLatLng(_currentPosition!));
     } catch (e) {
       print('Error obteniendo la ubicación: $e');
       setState(() {
-        _currentPosition = LatLng(25.6866, -100.3161);  // Monterrey
+        _currentPosition = LatLng(25.6866, -100.3161);  // Monterrey por defecto
         _markers.add(Marker(
           markerId: MarkerId('defaultLocation'),
           position: _currentPosition!,
@@ -64,12 +62,11 @@ class _MapScreenState extends State<MapScreen> {
         ));
       });
 
-      if (_controller != null) {
-        _controller?.animateCamera(CameraUpdate.newLatLng(_currentPosition!));
-      }
+      _controller?.animateCamera(CameraUpdate.newLatLng(_currentPosition!));
     }
   }
 
+  // Inicia la búsqueda de rutas
   Future<void> _startRoutes() async {
     if (_currentPosition == null || _selectedLocation == null) return;
 
@@ -88,11 +85,11 @@ class _MapScreenState extends State<MapScreen> {
     });
   }
 
+  // Selecciona una ruta de las disponibles
   void _selectRoute(int index) {
     setState(() {
       _selectedRouteIndex = index;
       _polylines.clear();
-
       for (int i = 0; i < _routes.length; i++) {
         _polylines.add(Polyline(
           polylineId: PolylineId('route_$i'),
@@ -110,6 +107,7 @@ class _MapScreenState extends State<MapScreen> {
       appBar: AppBar(title: Text('MoonHike')),
       body: Stack(
         children: [
+          // Mapa de Google
           GoogleMap(
             initialCameraPosition: CameraPosition(
               target: _currentPosition ?? LatLng(25.6866, -100.3161), // Monterrey por defecto
@@ -126,6 +124,7 @@ class _MapScreenState extends State<MapScreen> {
             myLocationEnabled: true,
             myLocationButtonEnabled: true,
           ),
+          // Barra de búsqueda de direcciones
           Positioned(
             top: 10,
             left: 10,
@@ -140,18 +139,18 @@ class _MapScreenState extends State<MapScreen> {
                     infoWindow: InfoWindow(title: 'Ubicación seleccionada'),
                   ));
 
-                  // Centra la cámara en la ubicación seleccionada
                   _controller?.animateCamera(CameraUpdate.newLatLng(_selectedLocation!));
 
-                  // Activa el botón de "Iniciar Rutas" cuando se selecciona una ubicación
+                  // Muestra el botón para iniciar rutas
                   _showStartRouteButton = true;
                 });
               },
             ),
           ),
+          // Botón para iniciar las rutas
           if (_showStartRouteButton)
             Positioned(
-              bottom: 30,
+              bottom: 90,
               left: 10,
               right: 10,
               child: ElevatedButton(
@@ -159,24 +158,24 @@ class _MapScreenState extends State<MapScreen> {
                 child: Text('Iniciar Rutas'),
               ),
             ),
-          Positioned(
-            bottom: 30,
-            left: 10,
-            right: 10,
-            child: _routes.isNotEmpty
-                ? Column(
-              children: List.generate(_routes.length, (index) {
-                return ElevatedButton(
-                  onPressed: () => _selectRoute(index),
-                  child: Text('Seleccionar Ruta ${index + 1}'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: index == _selectedRouteIndex ? Colors.blue : Colors.grey,
-                  ),
-                );
-              }),
-            )
-                : Container(),
-          ),
+          // Opciones de selección de rutas
+          if (_routes.isNotEmpty)
+            Positioned(
+              bottom: 30,
+              left: 10,
+              right: 10,
+              child: Column(
+                children: List.generate(_routes.length, (index) {
+                  return ElevatedButton(
+                    onPressed: () => _selectRoute(index),
+                    child: Text('Seleccionar Ruta ${index + 1}'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: index == _selectedRouteIndex ? Colors.blue : Colors.grey,
+                    ),
+                  );
+                }),
+              ),
+            ),
         ],
       ),
     );

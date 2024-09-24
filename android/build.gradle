@@ -1,3 +1,12 @@
+plugins {
+    // Agrega otros plugins aquí si los tienes
+    // id 'com.android.application'
+    // id 'kotlin-android'
+
+    // Agrega el plugin de Google Services
+    id 'com.google.gms.google-services' version '4.3.15' apply false
+}
+
 allprojects {
     repositories {
         google()
