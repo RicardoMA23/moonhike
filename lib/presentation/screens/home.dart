@@ -6,6 +6,8 @@ import 'package:moonhike/data/repositories/route_repository.dart';
 import 'package:moonhike/domain/use_cases/get_routes_use_case.dart';
 import 'package:moonhike/core/widgets/address_search_widget.dart';
 import '../../core/utils/location_utils.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:moonhike/presentation/screens/login.dart';
 
 class MapScreen extends StatefulWidget {
   @override
@@ -66,6 +68,15 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+  // Función para cerrar sesión
+  Future<void> _logout() async {
+    await FirebaseAuth.instance.signOut();  // Cierra sesión en Firebase
+    Navigator.pushReplacement( // Redirige al LoginPage
+      context,
+      MaterialPageRoute(builder: (context) => LoginPage()),
+    );
+  }
+
   // Inicia la búsqueda de rutas
   Future<void> _startRoutes() async {
     if (_currentPosition == null || _selectedLocation == null) return;
@@ -104,6 +115,33 @@ class _MapScreenState extends State<MapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: Drawer( // Menú desplegable
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: Colors.blue,
+              ),
+              child: Text('Menu'),
+            ),
+            ListTile(
+              leading: Icon(Icons.home),
+              title: Text('Inicio'),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.logout),
+              title: Text('Cerrar Sesión'),
+              onTap: () {
+                _logout(); // Llama a la función de logout
+              },
+            ),
+          ],
+        ),
+      ),
       appBar: AppBar(title: Text('MoonHike')),
       body: Stack(
         children: [
@@ -150,7 +188,7 @@ class _MapScreenState extends State<MapScreen> {
           // Botón para iniciar las rutas
           if (_showStartRouteButton)
             Positioned(
-              bottom: 90,
+              bottom: 100,
               left: 10,
               right: 10,
               child: ElevatedButton(
@@ -161,7 +199,7 @@ class _MapScreenState extends State<MapScreen> {
           // Opciones de selección de rutas
           if (_routes.isNotEmpty)
             Positioned(
-              bottom: 30,
+              bottom: 170,
               left: 10,
               right: 10,
               child: Column(
