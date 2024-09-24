@@ -43,7 +43,8 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Registro")),
-      body: Padding(
+      resizeToAvoidBottomInset: true, // Ajusta la pantalla al aparecer el teclado
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -67,7 +68,14 @@ class _RegisterPageState extends State<RegisterPage> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: _register,
-              child: Text("Registrarse"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent, // Cambiado a backgroundColor
+                padding: EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text("Registrarse", style: TextStyle(color: Colors.white)),
             ),
             SizedBox(height: 10),
             Text(
@@ -75,6 +83,12 @@ class _RegisterPageState extends State<RegisterPage> {
               style: TextStyle(color: Colors.red),
             ),
             SizedBox(height: 10),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Volver al login si ya tiene cuenta
+              },
+              child: Text("¿Ya tienes cuenta? Inicia sesión"),
+            ),
           ],
         ),
       ),

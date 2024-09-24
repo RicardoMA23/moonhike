@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:moonhike/presentation/screens/home.dart'; // Página de inicio después de iniciar sesión
-import 'register.dart';
- // Redirige a la página de registro
+import 'register.dart'; // Redirige a la página de registro
 
 class LoginPage extends StatefulWidget {
   @override
@@ -37,7 +36,8 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Iniciar Sesión")),
-      body: Padding(
+      resizeToAvoidBottomInset: true, // Ajusta la pantalla al aparecer el teclado
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -55,7 +55,14 @@ class _LoginPageState extends State<LoginPage> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: _login,
-              child: Text("Iniciar Sesión"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent, // Cambiado a backgroundColor
+                padding: EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text("Iniciar Sesión", style: TextStyle(color: Colors.white)),
             ),
             SizedBox(height: 10),
             Text(
