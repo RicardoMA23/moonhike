@@ -22,7 +22,7 @@ class _MapScreenState extends State<MapScreen> {
   int _selectedRouteIndex = 0;
   List<List<LatLng>> _routes = [];
 
-  final RouteRepository routeRepository = RouteRepository(RouteService('YOUR_API_KEY_HERE'));
+  final RouteRepository routeRepository = RouteRepository(RouteService('AIzaSyDNHOPdlWDOqsFiL9_UQCkg2fnlpyww6A4'));
   late GetRoutesUseCase getRoutesUseCase;
 
   _MapScreenState() {

@@ -70,7 +70,7 @@ class _RegisterPageState extends State<RegisterPage> {
               onPressed: _register,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blueAccent, // Cambiado a backgroundColor
-                padding: EdgeInsets.symmetric(vertical: 16),
+                padding: EdgeInsets.symmetric(vertical: 15, horizontal: 15),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
