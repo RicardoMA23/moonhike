@@ -1,3 +1,5 @@
+//Aqui se encuentran los colores que estaran en toda la aplicación
+
 import 'package:flutter/material.dart';
 
 class AppColors {

@@ -1,8 +1,10 @@
+//Este archivo contiene la pantalla de login
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:moonhike/presentation/screens/home.dart'; // Página de inicio después de iniciar sesión
-import 'register.dart'; // Redirige a la página de registro
-import 'package:moonhike/core/constans/Colors.dart'; // Constantes de colores personalizadas
+import 'package:moonhike/presentation/screens/home.dart';
+import 'register.dart'; //
+import 'package:moonhike/core/constans/Colors.dart';
 
 class LoginPage extends StatefulWidget {
   @override

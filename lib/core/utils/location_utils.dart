@@ -1,3 +1,5 @@
+//Este archivo contiene los permisos necesarios para la utilidades de locación
+
 import 'package:geolocator/geolocator.dart';
 
 class LocationUtils {

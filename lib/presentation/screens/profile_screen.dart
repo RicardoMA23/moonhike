@@ -1,3 +1,5 @@
+//Este archivo contiene la pantalla de detalles del perfil
+
 import 'package:flutter/material.dart';
 
 void main() {

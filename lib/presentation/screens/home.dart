@@ -1,3 +1,6 @@
+/*Esta es la pantalla principal que usa todos los componentes anteriores para mostrar el mapa,
+las rutas, y el widget de búsqueda.*/
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';

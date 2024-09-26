@@ -1,7 +1,9 @@
+//Archivo que se ejecuta al iniciar la aplicación
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:moonhike/presentation/screens/login.dart';
-import 'firebase_options.dart'; // Asegúrate de tener tu archivo de configuración de Firebase
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,7 +21,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: LoginPage(), // Página inicial que cargará al abrir la app
+      home: LoginPage(),
     );
   }
 }

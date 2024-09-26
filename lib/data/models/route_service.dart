@@ -1,3 +1,5 @@
+//Este archivo gestiona las solicitudes a la API de Google Directions, extrayendo las rutas con la distancia, duración y puntos.
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:google_maps_flutter/google_maps_flutter.dart';

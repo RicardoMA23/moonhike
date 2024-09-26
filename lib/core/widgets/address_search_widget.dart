@@ -1,3 +1,6 @@
+/*Este es el widget de la barra de búsqueda que usa la API de Google Places para autocompletar las
+direcciones. Está en la capa de presentación, porque es un componente de interfaz de usuario.*/
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
