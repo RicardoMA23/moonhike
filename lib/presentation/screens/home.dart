@@ -90,7 +90,7 @@ class _MapScreenState extends State<MapScreen> {
       // Actualiza la posición actual y refresca el mapa
       setState(() {
         _currentPosition = LatLng(position.latitude, position.longitude);
-        _updateCurrentLocationMarker();
+        //_updateCurrentLocationMarker();
       });
 
       // Mueve la cámara a la nueva posición del usuario
@@ -100,7 +100,7 @@ class _MapScreenState extends State<MapScreen> {
     });
   }
 
-  // Actualiza el marcador de la ubicación actual del usuario
+  /* Actualiza el marcador de la ubicación actual del usuario
   void _updateCurrentLocationMarker() {
     _markers.removeWhere((marker) => marker.markerId.value == 'currentLocation');
     _markers.add(Marker(
@@ -108,7 +108,7 @@ class _MapScreenState extends State<MapScreen> {
       position: _currentPosition!,
       infoWindow: InfoWindow(title: 'Mi Ubicación'),
     ));
-  }
+  } */
 
   // Función para cerrar sesión
   Future<void> _logout() async {
