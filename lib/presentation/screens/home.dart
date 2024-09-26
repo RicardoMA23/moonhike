@@ -1,17 +1,16 @@
-/*Esta es la pantalla principal que usa todos los componentes anteriores para mostrar el mapa,
-las rutas, y el widget de búsqueda.*/
-
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
+import 'package:moonhike/core/widgets/address_search_widget.dart';
 import 'package:moonhike/data/models/route_service.dart';
 import 'package:moonhike/data/repositories/route_repository.dart';
 import 'package:moonhike/domain/use_cases/get_routes_use_case.dart';
-import 'package:moonhike/core/widgets/address_search_widget.dart';
-import '../../core/utils/location_utils.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:moonhike/presentation/screens/login.dart';
 
+import '../../core/utils/location_utils.dart';
+import 'login.dart';
+ 
 class MapScreen extends StatefulWidget {
   @override
   _MapScreenState createState() => _MapScreenState();
@@ -27,7 +26,7 @@ class _MapScreenState extends State<MapScreen> {
   int _selectedRouteIndex = 0;
   List<List<LatLng>> _routes = [];
 
-  final RouteRepository routeRepository = RouteRepository(RouteService('AIzaSyDNHOPdlWDOqsFiL9_UQCkg2fnlpyww6A4'));
+  final RouteRepository routeRepository = RouteRepository(RouteService('AIzaSyDNHOPdlWDOqsFiL9_UQCkg2fnlpyww6A4')); // Usa tu API key
   late GetRoutesUseCase getRoutesUseCase;
 
   _MapScreenState() {
@@ -40,66 +39,92 @@ class _MapScreenState extends State<MapScreen> {
     _setInitialLocation();
   }
 
-  // Establece la ubicación inicial
+  // Establece la ubicación inicial y actualiza cuando el usuario se mueve
   void _setInitialLocation() async {
     try {
       Position position = await LocationUtils.getUserLocation();
-      print("Ubicación actual: ${position.latitude}, ${position.longitude}");
-
       setState(() {
         _currentPosition = LatLng(position.latitude, position.longitude);
-        _markers.add(Marker(
-          markerId: MarkerId('currentLocation'),
-          position: _currentPosition!,
-          infoWindow: InfoWindow(title: 'Mi Ubicación'),
-        ));
+        _addMarker(
+          _currentPosition!,
+          'currentLocation',
+          'Mi Ubicación',
+        );
       });
-
       _controller?.animateCamera(CameraUpdate.newLatLng(_currentPosition!));
     } catch (e) {
-      print('Error obteniendo la ubicación: $e');
       setState(() {
-        _currentPosition = LatLng(25.6866, -100.3161);  // Monterrey por defecto
-        _markers.add(Marker(
-          markerId: MarkerId('defaultLocation'),
-          position: _currentPosition!,
-          infoWindow: InfoWindow(title: 'Ubicación por Defecto: Monterrey'),
-        ));
+        _currentPosition = LatLng(25.6866, -100.3161);  // Ubicación por defecto
+        _addMarker(_currentPosition!, 'defaultLocation', 'Ubicación por Defecto: Monterrey');
       });
-
       _controller?.animateCamera(CameraUpdate.newLatLng(_currentPosition!));
     }
   }
 
+  // Actualiza la posición actual antes de realizar cualquier acción
+  Future<void> _updateCurrentLocation() async {
+    Position position = await LocationUtils.getUserLocation();
+    setState(() {
+      _currentPosition = LatLng(position.latitude, position.longitude);
+    });
+  }
+
+  // Función para añadir marcadores
+  void _addMarker(LatLng position, String markerId, String title, {String? snippet}) {
+    setState(() {
+      _markers.add(Marker(
+        markerId: MarkerId(markerId),
+        position: position,
+        infoWindow: InfoWindow(
+          title: title,
+          snippet: snippet,
+        ),
+      ));
+    });
+  }
+
   // Función para cerrar sesión
   Future<void> _logout() async {
-    await FirebaseAuth.instance.signOut();  // Cierra sesión en Firebase
-    Navigator.pushReplacement( // Redirige al LoginPage
+    await FirebaseAuth.instance.signOut();
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => LoginPage()),
     );
   }
 
-  // Inicia la búsqueda de rutas
+  // Inicia las rutas
   Future<void> _startRoutes() async {
-    if (_currentPosition == null || _selectedLocation == null) return;
+    await _updateCurrentLocation(); // Actualiza la ubicación antes de iniciar las rutas
+    if (_currentPosition == null || _selectedLocation == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Por favor selecciona una ubicación')),
+      );
+      return;
+    }
 
-    _routes = await getRoutesUseCase.execute(_currentPosition!, _selectedLocation!);
+    try {
+      _routes = await getRoutesUseCase.execute(_currentPosition!, _selectedLocation!);
 
-    setState(() {
-      _polylines.clear();
-      for (int i = 0; i < _routes.length; i++) {
-        _polylines.add(Polyline(
-          polylineId: PolylineId('route_$i'),
-          points: _routes[i],
-          color: i == _selectedRouteIndex ? Colors.blue : Colors.grey,
-          width: 5,
-        ));
-      }
-    });
+      setState(() {
+        _polylines.clear();
+        for (int i = 0; i < _routes.length; i++) {
+          _polylines.add(Polyline(
+            polylineId: PolylineId('route_$i'),
+            points: _routes[i],
+            color: i == _selectedRouteIndex ? Colors.blue : Colors.grey,
+            width: 5,
+          ));
+        }
+      });
+    } catch (e) {
+      print('Error obteniendo las rutas: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al obtener las rutas')),
+      );
+    }
   }
 
-  // Selecciona una ruta de las disponibles
+  // Selecciona una ruta
   void _selectRoute(int index) {
     setState(() {
       _selectedRouteIndex = index;
@@ -115,17 +140,70 @@ class _MapScreenState extends State<MapScreen> {
     });
   }
 
+  // Reportar un problema
+  void _reportIssue(BuildContext context) async {
+    await _updateCurrentLocation(); // Actualiza la ubicación antes de hacer el reporte
+    User? currentUser = FirebaseAuth.instance.currentUser;
+    String email = currentUser?.email ?? 'Usuario Desconocido';
+    String? selectedIssue;
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('¿Qué desea reportar?'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: Text('No hay luz'),
+                leading: Radio<String>(
+                  value: 'No hay luz',
+                  groupValue: selectedIssue,
+                  onChanged: (value) {
+                    setState(() {
+                      selectedIssue = value;
+                    });
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ),
+              ListTile(
+                title: Text('Zona conflictiva'),
+                leading: Radio<String>(
+                  value: 'Zona conflictiva',
+                  groupValue: selectedIssue,
+                  onChanged: (value) {
+                    setState(() {
+                      selectedIssue = value;
+                    });
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (selectedIssue != null) {
+      String currentTime = DateFormat('yyyy-MM-dd – kk:mm').format(DateTime.now());
+      _addMarker(_currentPosition!, 'issue_${_markers.length}', 'Reporte: $selectedIssue',
+          snippet: 'Usuario: $email\nHora: $currentTime');
+      _controller?.animateCamera(CameraUpdate.newLatLng(_currentPosition!));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: Drawer( // Menú desplegable
+      drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
             DrawerHeader(
-              decoration: BoxDecoration(
-                color: Colors.blue,
-              ),
+              decoration: BoxDecoration(color: Colors.blue),
               child: Text('Menu'),
             ),
             ListTile(
@@ -139,7 +217,7 @@ class _MapScreenState extends State<MapScreen> {
               leading: Icon(Icons.logout),
               title: Text('Cerrar Sesión'),
               onTap: () {
-                _logout(); // Llama a la función de logout
+                _logout();
               },
             ),
           ],
@@ -148,10 +226,9 @@ class _MapScreenState extends State<MapScreen> {
       appBar: AppBar(title: Text('MoonHike')),
       body: Stack(
         children: [
-          // Mapa de Google
           GoogleMap(
             initialCameraPosition: CameraPosition(
-              target: _currentPosition ?? LatLng(25.6866, -100.3161), // Monterrey por defecto
+              target: _currentPosition ?? LatLng(25.6866, -100.3161),
               zoom: 14.0,
             ),
             onMapCreated: (GoogleMapController controller) {
@@ -165,7 +242,6 @@ class _MapScreenState extends State<MapScreen> {
             myLocationEnabled: true,
             myLocationButtonEnabled: true,
           ),
-          // Barra de búsqueda de direcciones
           Positioned(
             top: 10,
             left: 10,
@@ -174,21 +250,13 @@ class _MapScreenState extends State<MapScreen> {
               onLocationSelected: (LatLng location) {
                 setState(() {
                   _selectedLocation = location;
-                  _markers.add(Marker(
-                    markerId: MarkerId('selectedLocation'),
-                    position: _selectedLocation!,
-                    infoWindow: InfoWindow(title: 'Ubicación seleccionada'),
-                  ));
-
+                  _addMarker(_selectedLocation!, 'selectedLocation', 'Ubicación seleccionada');
                   _controller?.animateCamera(CameraUpdate.newLatLng(_selectedLocation!));
-
-                  // Muestra el botón para iniciar rutas
                   _showStartRouteButton = true;
                 });
               },
             ),
           ),
-          // Botón para iniciar las rutas
           if (_showStartRouteButton)
             Positioned(
               bottom: 100,
@@ -199,7 +267,6 @@ class _MapScreenState extends State<MapScreen> {
                 child: Text('Iniciar Rutas'),
               ),
             ),
-          // Opciones de selección de rutas
           if (_routes.isNotEmpty)
             Positioned(
               bottom: 170,
@@ -218,6 +285,11 @@ class _MapScreenState extends State<MapScreen> {
               ),
             ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _reportIssue(context),
+        child: Icon(Icons.report),
+        backgroundColor: Colors.red,
       ),
     );
   }
