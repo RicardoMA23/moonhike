@@ -11,6 +11,7 @@ import 'package:moonhike/core/widgets/address_search_widget.dart';
 import '../../core/utils/location_utils.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:moonhike/presentation/screens/login.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MapScreen extends StatefulWidget {
   @override
@@ -74,6 +75,11 @@ class _MapScreenState extends State<MapScreen> {
   // Función para cerrar sesión
   Future<void> _logout() async {
     await FirebaseAuth.instance.signOut();  // Cierra sesión en Firebase
+
+    // Elimina el UID de SharedPreferences
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.remove('userUID');
+
     Navigator.pushReplacement( // Redirige al LoginPage
       context,
       MaterialPageRoute(builder: (context) => LoginPage()),
