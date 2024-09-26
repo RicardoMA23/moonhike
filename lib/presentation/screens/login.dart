@@ -2,9 +2,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:moonhike/presentation/screens/home.dart';
-import 'register.dart'; //
-import 'package:moonhike/core/constans/Colors.dart';
+import 'package:moonhike/presentation/screens/home.dart'; // Asegúrate de que este es el archivo correcto
+import 'package:shared_preferences/shared_preferences.dart';
+import 'register.dart'; // Tu archivo de registro
+import 'package:moonhike/core/constans/Colors.dart'; // Asegúrate de que esto está correcto
 
 class LoginPage extends StatefulWidget {
   @override
@@ -17,13 +18,37 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   String _errorMessage = '';
 
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? userUID = prefs.getString('userUID');
+
+    if (userUID != null) {
+      // Si ya hay una sesión activa, redirige a MapScreen
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => MapScreen()), // Pantalla principal
+      );
+    }
+  }
+
   Future<void> _login() async {
     try {
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-      // Si inicia sesión correctamente, lo redirige a la página principal
+
+      // Guardar UID en SharedPreferences
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('userUID', userCredential.user!.uid);
+
+      // Redirigir a la pantalla principal
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => MapScreen()),

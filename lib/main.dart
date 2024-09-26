@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'App Simple de Login/Registro',
+      title: 'MoonHike',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
