@@ -1,5 +1,3 @@
-//Este archivo contiene la pantalla de detalles del perfil
-
 import 'package:flutter/material.dart';
 
 void main() {
@@ -15,7 +13,23 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
+  @override
+  _ProfileScreenState createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  bool isEditing = false;
+  TextEditingController nameController = TextEditingController();
+  TextEditingController emailController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    nameController.text = 'Nombre del Usuario';
+    emailController.text = 'usuario@correo.com';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -27,52 +41,29 @@ class ProfileScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: <Widget>[
-            // Imagen de perfil
             CircleAvatar(
               radius: 60.0,
-              backgroundImage: NetworkImage('https://via.placeholder.com/150'), // Imagen simulada
+              backgroundImage: NetworkImage('https://via.placeholder.com/150'),
             ),
             SizedBox(height: 20.0),
-
-            // Nombre del usuario
-            Text(
-              'Nombre del Usuario',
-              style: TextStyle(
-                fontSize: 24.0,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 8.0),
-
-            // Correo electrónico
-            Text(
-              'usuario@correo.com',
-              style: TextStyle(
-                fontSize: 16.0,
-                color: Colors.grey[700],
-              ),
-            ),
+            isEditing ? _buildEditableFields() : _buildProfileDetails(),
             SizedBox(height: 20.0),
-
-            // Botón de Editar perfil
             ElevatedButton.icon(
               onPressed: () {
-                // Funcionalidad de edición de perfil
-                print('Editar perfil');
+                setState(() {
+                  isEditing = !isEditing;
+                });
               },
-              icon: Icon(Icons.edit),
-              label: Text('Editar perfil'),
+              icon: Icon(isEditing ? Icons.save : Icons.edit),
+              label: Text(isEditing ? 'Guardar cambios' : 'Editar perfil'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue,
                 foregroundColor: Colors.white,
               ),
             ),
             SizedBox(height: 20.0),
-
-            // Botón de Logout
             ElevatedButton.icon(
               onPressed: () {
-                // Simular logout o navegación
                 print('Cerrar sesión');
               },
               icon: Icon(Icons.logout),
@@ -82,9 +73,53 @@ class ProfileScreen extends StatelessWidget {
                 foregroundColor: Colors.white,
               ),
             ),
-          ], 
+          ],
         ),
       ),
+    );
+  }
+
+  Widget _buildProfileDetails() {
+    return Column(
+      children: [
+        Text(
+          nameController.text,
+          style: TextStyle(
+            fontSize: 24.0,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        SizedBox(height: 8.0),
+        Text(
+          emailController.text,
+          style: TextStyle(
+            fontSize: 16.0,
+            color: Colors.grey[700],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEditableFields() {
+    return Column(
+      children: [
+        TextField(
+          controller: nameController,
+          decoration: InputDecoration(
+            labelText: 'Nombre',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        SizedBox(height: 10.0),
+        TextField(
+          controller: emailController,
+          decoration: InputDecoration(
+            labelText: 'Correo electrónico',
+            border: OutlineInputBorder(),
+          ),
+        ),
+      ],
     );
   }
 }
