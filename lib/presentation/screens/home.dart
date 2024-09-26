@@ -27,6 +27,7 @@ class _MapScreenState extends State<MapScreen> {
   Set<Polyline> _polylines = {};
   int _selectedRouteIndex = 0;
   List<List<LatLng>> _routes = [];
+  String? _userEmail;  // Variable para almacenar el correo del usuario
 
   final RouteRepository routeRepository = RouteRepository(RouteService('AIzaSyDNHOPdlWDOqsFiL9_UQCkg2fnlpyww6A4'));
   late GetRoutesUseCase getRoutesUseCase;
@@ -39,6 +40,15 @@ class _MapScreenState extends State<MapScreen> {
   void initState() {
     super.initState();
     _setInitialLocation();
+    _getUserEmail();  // Obtén el correo electrónico cuando la pantalla inicia
+  }
+
+  // Método para obtener el correo del usuario
+  void _getUserEmail() {
+    User? user = FirebaseAuth.instance.currentUser;
+    setState(() {
+      _userEmail = user?.email;  // Guarda el correo en la variable
+    });
   }
 
   // Establece la ubicación inicial
@@ -132,7 +142,15 @@ class _MapScreenState extends State<MapScreen> {
               decoration: BoxDecoration(
                 color: Colors.blue,
               ),
-              child: Text('Menu'),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Bienvenido', style: TextStyle(color: Colors.white, fontSize: 24)),
+                  SizedBox(height: 10),
+                  if (_userEmail != null)  // Muestra el correo si está disponible
+                    Text(_userEmail!, style: TextStyle(color: Colors.white, fontSize: 16)),
+                ],
+              ),
             ),
             ListTile(
               leading: Icon(Icons.home),
